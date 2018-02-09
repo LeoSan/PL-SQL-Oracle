@@ -1,0 +1,53 @@
+INSERT INTO PENDUPM.IAAL 
+
+select 
+ gas.IDGASTO
+,MT.NMMOTIVOGASTO
+,gas.FDFECINI,gas.FDFECFIN
+,gas.FDFECREGISTRO
+,gas.IDSOLICITANTE
+,gas.FCSTATUS,gas.FNEMPNOMINA
+,gas.FCURGENTE,gas.FCVIATICO0
+,sum(com.FNIMPORTE) FV_FNIMPORTE,sum(com.FNTOTAL) FV_FNTOTAL
+,con.NMCONCEPTO ,con.IDTPOGASTO
+,FA.IDGASTOMAIN ga_IDGASTOMAIN
+,BI.IMPORTESOLICITUD BI_IMPORTESOLICITUD ,BI.IMPORTEFACTURACION BI_IMPORTEFACTURACION
+,fm.FCSTATUS ga_FCSTATUS
+,xt."BatNbr" xt_BatNbr ,xt."RefNbr" xt_RefNbr
+,gl."CuryDrAmt" gl_CuryDrAmt
+, (SELECT NO_LOTE FROM PENDUPM.PRORRATEOGASTO A WHERE A.ID_GASTO = gas.IDGASTO GROUP BY NO_LOTE ) AS NO_LOTE 
+, (SELECT SUM( PG.IMPORTE ) IMPORTE FROM PENDUPM.PRORRATEOGASTO PG WHERE PG.ID_GASTO = gas.idgasto AND PG.CONCEPTO_GASTO = con.NMCONCEPTO) AS IMPORTE_PRORRATEO
+, Gas.FDDYNAMICSCOMP 
+,  CASE Gas.FCSTATUS WHEN 'R' THEN 'Registrado'
+   WHEN 'P' THEN 'Pendiente de Autorización'
+   WHEN 'A' THEN 'Autorizado'
+   WHEN 'G' THEN 'En comprobación'
+   WHEN 'C' THEN 'Comprobada'
+   WHEN 'V' THEN 'Comprobacion Validada' 
+   WHEN 'D' THEN 'Deposito de viaticos'
+   WHEN 'F' THEN 'Finalizado'
+   WHEN 'Z' THEN 'Cancelado'
+   ELSE 'NO TIENE' END AS NOM_ESTATUS
+
+FROM
+/*4678*/    PENDUPM.GASTOMAIN Gas                           
+/*2466*/    left join PENDUPM.comprobaciongasto com on gas.idgasto = com.idgasto
+/*2558*/    left join PENDUPM.conceptogasto con on com.IDTPOGASTO = con.IDTPOGASTO and com.IDCONCEPTO = con.IDCONCEPTO
+/*2583*/    left join (SELECT IDGASTOMAIN,IDCONCEPTO,DECODE (IDCONCEPTO,  1043, 8,  1045, 7,0)IDTPOGASTO, SUM (FNIMPORTE) FNIMPORTE, IDPLANVIAJE FROM pendupm.facturaasignacion fa GROUP BY IDGASTOMAIN, IDCONCEPTO, IDPLANVIAJE) fa on  gas.idgasto =  fa.IDPLANVIAJE  and com.IDTPOGASTO =  fa.IDTPOGASTO
+/*2583*/    left join (select solicitud, CONCEPTO1 , sum (IMPORTESOLICITUD) IMPORTESOLICITUD , sum(IMPORTEFACTURACION) IMPORTEFACTURACION from GASTOS_TMP_LAYOUT@pendubi.com BI group by solicitud, CONCEPTO1 ) bi on FA.IDCONCEPTO = bI.CONCEPTO1 AND FA.IDGASTOMAIN = BI.SOLICITUD         
+/*2583*/    left join PENDUPM.FACTURACIONMAIN fm on FA.IDGASTOMAIN = fm.IDGASTOMAIN
+/*2727*/    left join pendupm.xtravelfieldhdr xt on fm.IDGASTOMAIN = to_number(xt."ReqNbr")
+/*2727*/    left join (select sum(gl."CuryDrAmt") "CuryDrAmt" , "BatNbr" , "RefNbr"from pendupm.GLTRAN gl  where gl."Acct" like '60100%' group by "BatNbr" , "RefNbr") gl on  gl."BatNbr" = xt."BatNbr" and gl."RefNbr" = xt."RefNbr"
+            INNER JOIN PENDUPM.CTMOTIVOGASTO MT ON MT.IDMOTIVOGASTO = Gas.IDMOTIVOGASTO
+WHERE 
+
+gas.FDFECREGISTRO >= to_Date ( '2017/01/01' ,'yyyy/MM/dd') AND com.IDTPOGASTO  in (7,8) AND  fm.FCSTATUS NOT IN ('Z')
+group by
+gas.IDGASTO, MT.NMMOTIVOGASTO,  gas.FDFECINI,gas.FDFECFIN,gas.FDFECREGISTRO,gas.IDSOLICITANTE,gas.FCSTATUS,gas.FNEMPNOMINA,gas.FCURGENTE,gas.FCVIATICO0--com.IDGASTO ,FA.IDGASTOMAIN,
+,con.NMCONCEPTO ,con.IDTPOGASTO
+,FA.IDGASTOMAIN
+,BI.IMPORTESOLICITUD  ,BI.IMPORTEFACTURACION
+,fm.FCSTATUS
+,xt."BatNbr",xt."RefNbr"
+,gl."CuryDrAmt"
+,Gas.FDDYNAMICSCOMP

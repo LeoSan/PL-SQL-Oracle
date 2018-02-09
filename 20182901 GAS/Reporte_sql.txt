@@ -1,0 +1,28 @@
+/* INCIDENCIA CASO PRORRATEADO PERO NO FINALIZADO*/
+select NOM_ESTATUS , count (1)
+from pendupm.iaal
+where  FDDYNAMICSCOMP  is not  null
+and NOM_ESTATUS not in ( 'Finalizado')
+group by NOM_ESTATUS
+
+/* INCIDENCIA CASO FINALIZADO PRORRATEADO Y DESPUES SE CANCELO*/
+select NOM_ESTATUS , count (1)
+from pendupm.iaal
+where  IMPORTE_PRORRATEO  is not  null
+and NOM_ESTATUS not in ( 'Finalizado')
+group by NOM_ESTATUS
+
+
+/* INCIDENCIA CASO CON LOTE Y NO ESTAN FINALIZADOS*/
+select NOM_ESTATUS , count (1)
+from pendupm.iaal
+where  NO_LOTE  is not  null
+and NOM_ESTATUS not in ( 'Finalizado')
+group by NOM_ESTATUS
+
+
+/*FINALIZADOS CON MONTOS DIFERENTES ENTRE IMPORTE Y PRORRATEO*/
+select idgasto, NOM_ESTATUS, FV_FNIMPORTE, IMPORTE_PRORRATEO , FV_FNIMPORTE - IMPORTE_PRORRATEO  
+from pendupm.iaal
+where  IMPORTE_PRORRATEO  is not  null
+and FV_FNIMPORTE <> IMPORTE_PRORRATEO

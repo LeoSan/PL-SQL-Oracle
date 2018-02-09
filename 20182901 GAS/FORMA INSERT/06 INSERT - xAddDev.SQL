@@ -1,0 +1,2 @@
+INSERT INTO PENDUPM.xAddDev 
+select * FROM xAddDev@ERPBASE.COM A;
