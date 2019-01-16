@@ -1703,8 +1703,8 @@ PROCEDURE SP_REPORTE_4_E(psSalida IN OUT T_CURSOR, P_PRESUPUESTO IN INTEGER, P_I
          V_CLAVE_AGRUPADOR   VARCHAR2(10); 
          V_INSERT_AGRUPADOR  VARCHAR2(10);
          V_RESP              NUMBER;
-         V_IND                NUMBER;
-         V_FLAG_TAG           VARCHAR2(200);
+         V_IND               NUMBER;
+         V_FLAG_TAG          VARCHAR2(200);
 
          
          CURSOR cur_peri_mes  IS
